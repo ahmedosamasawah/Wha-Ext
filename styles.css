@@ -1,0 +1,222 @@
+/* WhatsApp Voice Transcriber Styles */
+
+.transcribe-button {
+  margin: 5px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #ffffff;
+  background-color: #00a884;
+  border: none;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.transcribe-button:hover {
+  background-color: #008f72;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.transcribe-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.transcribe-button:disabled {
+  opacity: 0.7;
+  cursor: default;
+  transform: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.transcription-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  padding: 0;
+  z-index: 1000;
+  max-width: 500px;
+  width: 90%;
+  overflow: hidden;
+  animation: scaleIn 0.2s ease-out;
+}
+
+.transcription-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background-color: #f0f2f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.transcription-popup-title {
+  font-weight: 600;
+  color: #128c7e;
+  font-size: 16px;
+}
+
+.transcription-popup-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 18px;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.transcription-popup-close:hover {
+  background-color: #e0e0e0;
+  color: #555;
+}
+
+.transcription-popup-content {
+  padding: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+  line-height: 1.6;
+  color: #333333;
+  font-size: 14px;
+}
+
+.transcription-popup-footer {
+  padding: 12px 20px;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #e0e0e0;
+  background-color: #f0f2f5;
+}
+
+.transcription-copy-button {
+  padding: 8px 16px;
+  background-color: #00a884;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.transcription-copy-button:hover {
+  background-color: #008f72;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.wa-transcription {
+  margin-top: 6px;
+  padding: 8px 12px;
+  line-height: 1.5;
+  font-size: 13px;
+  background: #f0f2f5;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  color: #303030;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .transcription-popup {
+    background-color: #222;
+  }
+
+  .transcription-popup-header {
+    background-color: #333;
+    border-bottom-color: #444;
+  }
+
+  .transcription-popup-title {
+    color: #25d366;
+  }
+
+  .transcription-popup-close {
+    color: #aaa;
+  }
+
+  .transcription-popup-close:hover {
+    background-color: #444;
+    color: #ddd;
+  }
+
+  .transcription-popup-content {
+    color: #e0e0e0;
+  }
+
+  .transcription-popup-footer {
+    border-top-color: #444;
+    background-color: #333;
+  }
+
+  .wa-transcription {
+    background: #333;
+    color: #e0e0e0;
+  }
+}
+
+.transcription-popup-content a {
+  color: #128c7e;
+  text-decoration: none;
+}
+
+.transcription-popup-content a:hover {
+  text-decoration: underline;
+}
+
+.transcription-popup-content ol {
+  padding-left: 20px;
+}
+
+.transcription-popup-content li {
+  margin-bottom: 5px;
+}
