@@ -1,0 +1,21 @@
+{
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "useDefineForClassFields": true,
+    "baseUrl": ".",
+    "paths": {
+      "$lib": ["./src/lib"],
+      "$lib/*": ["./src/lib/*"],
+      "$lib/components": ["./src/lib/components"],
+      "$lib/components/*": ["./src/lib/components/*"],
+      "$api": ["./src/api"],
+      "$api/*": ["./src/api/*"],
+      "$services": ["./src/services"],
+      "$services/*": ["./src/services/*"],
+      "$utils": ["./src/utils"],
+      "$utils/*": ["./src/utils/*"],
+      "$types": ["./src/types"],
+      "$types/*": ["./src/types/*"]
+    }
+  }
+}
