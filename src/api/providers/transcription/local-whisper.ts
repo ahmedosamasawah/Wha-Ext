@@ -1,17 +1,10 @@
-import { createBaseTranscriber } from "./base";
 import type {
+  ConversionResult,
+  LocalWhisperConfig,
   TranscriberProvider,
   ApiKeyVerificationResult,
 } from "$types/providers";
-
-interface LocalWhisperConfig {
-  apiUrl?: string;
-}
-
-interface ConversionResult {
-  blob: Blob;
-  extension: string;
-}
+import { createBaseTranscriber } from "./base";
 
 const isAudioConversionSupported = (): boolean => {
   return typeof window !== "undefined" && window.AudioContext !== undefined;
@@ -21,9 +14,8 @@ const convertToWav = async (
   audioBlob: Blob,
   apiUrl?: string
 ): Promise<ConversionResult> => {
-  if (audioBlob.type === "audio/wav") {
+  if (audioBlob.type === "audio/wav")
     return { blob: audioBlob, extension: "wav" };
-  }
 
   if (!isAudioConversionSupported()) {
     console.warn("Audio conversion not supported in this environment");
@@ -48,9 +40,8 @@ const convertToWav = async (
         } catch (error) {
           console.warn("Error converting to WAV:", error);
           resolve({ blob: audioBlob, extension: "ogg" });
-          try {
-            audioContext.close();
-          } catch (e) {}
+
+          audioContext.close();
         }
       };
 

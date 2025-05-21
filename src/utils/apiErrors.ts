@@ -150,7 +150,7 @@ export function formatTranscriptionError(
   else cleanedMessage = "Try again later or check the extension settings.";
 
   return {
-    original: message,
+    original: `ERROR: ${message}`,
     processed: cleanedMessage,
     error: message,
   };

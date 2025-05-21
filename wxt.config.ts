@@ -15,14 +15,27 @@ export default defineConfig({
   },
   manifest: {
     name: "WhatsApp AI Transcriber",
-    version: "0.0.1",
+    version: "1.0.0",
     description:
-      "A browser extension that adds voice message transcription functionality to WhatsApp Web, using OpenAI's Whisper API.",
+      "Transcribe, clean, summarize, and get suggested replies for WhatsApp voice messages",
+
     permissions: ["activeTab", "storage", "tabs", "scripting"],
-    host_permissions: ["https://web.whatsapp.com/*"],
+    host_permissions: [
+      "https://web.whatsapp.com/*",
+      "http://localhost:11434/*",
+      "http://127.0.0.1:11434/*",
+    ],
+    content_security_policy: {
+      extension_pages: "script-src 'self'; object-src 'self'",
+    },
     web_accessible_resources: [
       {
-        resources: ["whatsapp_hook.js"],
+        resources: [
+          "whatsapp_hook.js",
+          "fonts/kitab-base.woff2",
+          "fonts/kitab-base-bold.woff2",
+          "fonts/kitab-phrases.woff2",
+        ],
         matches: ["https://web.whatsapp.com/*"],
       },
     ],

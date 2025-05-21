@@ -37,12 +37,12 @@ export interface ShowDetail {
 }
 
 export function processedResultToTranscriptionData(
-  result: ProcessedResult
+  result: ProcessedResult & { summary?: string; reply?: string }
 ): TranscriptionData {
   return {
     transcript: result.original,
     cleaned: result.processed,
-    summary: "",
-    reply: "",
+    summary: result.summary || "",
+    reply: result.reply || "",
   };
 }

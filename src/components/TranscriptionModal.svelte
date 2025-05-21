@@ -67,10 +67,12 @@
 
   const isErrorState = (): boolean => data.transcript?.startsWith("ERROR:");
 
-  const getTabButtonClass = (tabId: string): string => {
-    const baseClass = "tab-button";
-    return activeTab === tabId ? `${baseClass} active` : baseClass;
-  };
+  const getTabButtonClass = (tabId: keyof TranscriptionData): string[] => [
+    "flex-1 py-2.5 px-2 border-opacity-0 cursor-pointer transition-all flex flex-col items-center text-xs text-black",
+    activeTab === tabId
+      ? "border-b-[3px] border-[#00a884] text-[#00a884] font-medium bg-[#00a884]"
+      : "hover:bg-gray-200 bg-white border-gray-200",
+  ];
 
   const openOptionsPage = (): void => {
     chrome.runtime.sendMessage({ action: "openOptionsPage" });
@@ -81,394 +83,156 @@
 </script>
 
 {#if show}
-  <div class="modal-root">
-    <div
-      class="modal-backdrop"
-      onclick={handleClose}
-      role="dialog"
-      aria-modal="true"
-      tabindex="-1"
-      onkeydown={handleKeydown}
-    ></div>
+  <div
+    class={["fixed inset-0 bg-black/60 z-50 backdrop-blur-sm animate-fadeIn"]}
+    onclick={handleClose}
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    onkeydown={handleKeydown}
+  ></div>
 
-    <div
-      class="modal-container"
-      onclick={handleModalClick}
-      onkeydown={handleModalKeydown}
-      tabindex="0"
-      role="dialog"
-      aria-labelledby="modal-title"
+  <div
+    class={[
+      "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-xl p-0 z-[1000] max-w-lg w-[90%] overflow-hidden animate-scaleIn flex flex-col max-h-[90vh]",
+    ]}
+    onclick={handleModalClick}
+    onkeydown={handleModalKeydown}
+    tabindex="0"
+    role="dialog"
+    aria-labelledby="modal-title"
+  >
+    <header
+      class={[
+        "flex justify-between items-center p-4 bg-gray-100 border-b border-gray-200",
+      ]}
     >
-      <header class="modal-header">
-        <h2 class="modal-title" id="modal-title">
-          Voice Message Transcription
-        </h2>
-        <button class="close-button" onclick={handleClose}>✕</button>
-      </header>
+      <h2 class={["font-semibold text-[#128c7e] text-base"]} id="modal-title">
+        Voice Message Transcription
+      </h2>
+      <button
+        class={[
+          "bg-white bg-opacity-0 border-none text-gray-500 text-lg cursor-pointer w-6 h-6 flex items-center justify-center rounded-full transition-all hover:bg-gray-200 hover:text-gray-700",
+        ]}
+        onclick={handleClose}>✕</button
+      >
+    </header>
 
-      <nav class="tab-nav">
-        {#each tabs as tab}
-          <button
-            class={getTabButtonClass(tab.id)}
-            disabled={loading || !data[tab.id]}
-            onclick={() => setActiveTab(tab.id)}
-            aria-selected={activeTab === tab.id}
-            role="tab"
-            aria-controls={`panel-${tab.id}`}
-          >
-            <span>{tab.label}</span>
-          </button>
-        {/each}
-      </nav>
+    <nav class={["flex bg-gray-100 border-b border-gray-200"]}>
+      {#each tabs as tab}
+        <button
+          class={getTabButtonClass(tab.id)}
+          disabled={loading || !data[tab.id]}
+          onclick={() => setActiveTab(tab.id)}
+          aria-selected={activeTab === tab.id}
+          role="tab"
+          aria-controls={`panel-${tab.id}`}
+        >
+          <span>{tab.label}</span>
+        </button>
+      {/each}
+    </nav>
 
-      <main class="modal-content">
-        {#if loading}
-          <div class="loading-container">
-            <div class="spinner"></div>
-            <p>Processing voice message...</p>
-          </div>
-        {:else if isErrorState()}
-          <section class="error-container">
-            <div class="error-icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                width="48"
-                height="48"
-                aria-hidden="true"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </div>
-            <p class="error-text" dir="auto">
-              {data.transcript.replace("ERROR: ", "")}
-            </p>
-            <p class="error-details" dir="auto">
-              {data.cleaned}
-            </p>
-
-            {#if data.transcript.includes("API key has reached its usage limit")}
-              <div style="margin-top: 24px; text-align: center;">
-                <button class="api-key-button" onclick={openOptionsPage}>
-                  Update API Key
-                </button>
-              </div>
-            {/if}
-          </section>
-        {:else}
+    <main class={["p-5 overflow-y-auto max-h-[60vh] flex-grow"]}>
+      {#if loading}
+        <div class={["flex flex-col items-center justify-center py-10"]}>
           <div
-            class="transcription-container"
-            id={`panel-${activeTab}`}
-            role="tabpanel"
-            aria-labelledby={`tab-${activeTab}`}
+            class={[
+              "w-10 h-10 border-4 border-gray-200 border-t-[#00a884] rounded-full animate-spin mb-5",
+            ]}
+          ></div>
+          <p class={["text-gray-500 text-sm"]}>Processing voice message...</p>
+        </div>
+      {:else if isErrorState()}
+        <section class={["flex flex-col items-center justify-center py-5"]}>
+          <div
+            class={[
+              "w-12 h-12 text-red-500 mb-3 flex items-center justify-center",
+            ]}
           >
-            <p
-              class="transcription-text"
-              dir="auto"
-              style="unicode-bidi: plaintext;"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              class={["w-12 h-12"]}
+              aria-hidden="true"
             >
-              {data[activeTab]}
-            </p>
+              <path
+                fill-rule="evenodd"
+                d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                clip-rule="evenodd"
+              />
+            </svg>
           </div>
-        {/if}
-      </main>
+          <p
+            class={["text-red-500 font-medium text-center text-base mb-2"]}
+            dir="auto"
+          >
+            {data.transcript.replace("ERROR: ", "")}
+          </p>
+          <p class={["text-gray-600 text-sm text-center"]} dir="auto">
+            {data.cleaned}
+          </p>
 
-      <footer class="modal-footer">
-        {#if !loading}
-          <button
-            disabled={!data.transcript ||
-              !data.cleaned ||
-              !data.summary ||
-              !data.reply}
-            onclick={copyAllText}
-            class="button-secondary"
+          {#if data.transcript.includes("API key has reached its usage limit")}
+            <div class={["mt-6 text-center"]}>
+              <button
+                class={[
+                  "bg-[#00a884] text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#008f70] transition-colors",
+                ]}
+                onclick={openOptionsPage}
+              >
+                Update API Key
+              </button>
+            </div>
+          {/if}
+        </section>
+      {:else}
+        <div
+          class={["leading-relaxed"]}
+          id={`panel-${activeTab}`}
+          role="tabpanel"
+          aria-labelledby={`tab-${activeTab}`}
+        >
+          <p
+            class={["m-0 whitespace-pre-wrap font-kitab"]}
+            dir="auto"
+            style="unicode-bidi: plaintext;"
           >
-            {copyAllButtonText}
-          </button>
-          <button
-            disabled={!data[activeTab]}
-            onclick={() => copyText(data[activeTab])}
-            class="button-primary"
-          >
-            {copyButtonText}
-          </button>
-        {/if}
-      </footer>
-    </div>
+            {data[activeTab]}
+          </p>
+        </div>
+      {/if}
+    </main>
+
+    <footer
+      class={[
+        "p-3 flex justify-end gap-2.5 border-t border-gray-200 bg-gray-100",
+      ]}
+    >
+      {#if !loading}
+        <button
+          disabled={!data.transcript ||
+            !data.cleaned ||
+            !data.summary ||
+            !data.reply}
+          onclick={copyAllText}
+          class={[
+            "py-2 px-4 border-none rounded-full text-xs cursor-pointer transition-all font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed",
+          ]}
+        >
+          {copyAllButtonText}
+        </button>
+        <button
+          disabled={!data[activeTab]}
+          onclick={() => copyText(data[activeTab])}
+          class={[
+            "py-2 px-4 border-none rounded-full text-xs cursor-pointer transition-all font-medium bg-[#00a884] text-white hover:bg-[#008f72] disabled:opacity-50 disabled:cursor-not-allowed",
+          ]}
+        >
+          {copyButtonText}
+        </button>
+      {/if}
+    </footer>
   </div>
 {/if}
-
-<style>
-  /* Reset styles to prevent WhatsApp styles from affecting our modal */
-  .modal-root * {
-    all: revert;
-    box-sizing: border-box;
-    font-family:
-      system-ui,
-      -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
-      sans-serif;
-    line-height: 1.5;
-  }
-
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.6);
-    z-index: 9997;
-    backdrop-filter: blur(4px);
-    animation: fadeIn 0.2s ease-out forwards;
-  }
-
-  .modal-container {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    padding: 0;
-    z-index: 9999;
-    max-width: 500px;
-    width: 90%;
-    overflow: hidden;
-    animation: scaleIn 0.2s ease-out forwards;
-    display: flex;
-    flex-direction: column;
-    max-height: 90vh;
-  }
-
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    background-color: #f8f8f8;
-    border-bottom: 1px solid #e0e0e0;
-  }
-
-  .modal-title {
-    font-weight: 600;
-    color: #128c7e;
-    font-size: 16px;
-    margin: 0;
-  }
-
-  .close-button {
-    background-color: transparent;
-    border: none;
-    color: #888;
-    font-size: 20px;
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.2s;
-  }
-
-  .close-button:hover {
-    background-color: #eee;
-    color: #444;
-  }
-
-  .tab-nav {
-    display: flex;
-    background-color: #f8f8f8;
-    border-bottom: 1px solid #e0e0e0;
-  }
-
-  .tab-button {
-    flex: 1;
-    padding: 10px 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-size: 12px;
-    color: black;
-    background-color: white;
-    border: none;
-    border-bottom: 3px solid transparent;
-  }
-
-  .tab-button:hover {
-    background-color: #f0f0f0;
-  }
-
-  .tab-button.active {
-    border-bottom: 3px solid #00a884;
-    color: #00a884;
-    font-weight: 500;
-    background-color: rgba(0, 168, 132, 0.08);
-  }
-
-  .tab-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .modal-content {
-    padding: 20px;
-    overflow-y: auto;
-    max-height: 60vh;
-    flex-grow: 1;
-  }
-
-  .loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 0;
-  }
-
-  .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #00a884;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
-  }
-
-  .error-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px 0;
-  }
-
-  .error-icon {
-    width: 48px;
-    height: 48px;
-    color: #e74c3c;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .error-text {
-    color: #e74c3c;
-    font-weight: 500;
-    text-align: center;
-    font-size: 16px;
-    margin-bottom: 8px;
-  }
-
-  .error-details {
-    color: #666;
-    font-size: 14px;
-    text-align: center;
-  }
-
-  .transcription-text {
-    margin: 0;
-    white-space: pre-wrap;
-  }
-
-  .modal-footer {
-    padding: 12px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    border-top: 1px solid #e0e0e0;
-    background-color: #f8f8f8;
-  }
-
-  .button-secondary {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 999px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-weight: 500;
-    background-color: #e0e0e0;
-    color: #333;
-  }
-
-  .button-secondary:hover {
-    background-color: #d0d0d0;
-  }
-
-  .button-primary {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 999px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-weight: 500;
-    background-color: #00a884;
-    color: white;
-  }
-
-  .button-primary:hover {
-    background-color: #008f72;
-  }
-
-  .button-primary:disabled,
-  .button-secondary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .api-key-button {
-    background-color: #00a884;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-
-  .api-key-button:hover {
-    background-color: #008f70;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes scaleIn {
-    from {
-      transform: translate(-50%, -50%) scale(0.95);
-      opacity: 0;
-    }
-    to {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 1;
-    }
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-</style>

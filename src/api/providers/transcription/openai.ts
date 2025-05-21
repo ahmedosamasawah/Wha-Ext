@@ -4,14 +4,9 @@ import { verifyApiKey } from "$utils/apiKeyVerifier";
 
 import type {
   TranscriberProvider,
+  OpenAITranscriberConfig,
   ApiKeyVerificationResult,
 } from "$types/providers";
-
-interface OpenAITranscriberConfig {
-  apiKey?: string;
-  apiUrl?: string;
-  model?: string;
-}
 
 const DEFAULT_CONFIG: OpenAITranscriberConfig = {
   apiUrl: "https://api.openai.com",

@@ -28,7 +28,6 @@ export async function verifyApiKey(
   try {
     if (providerType === "openai") return await verifyOpenAIKey(apiKey, apiUrl);
     else if (providerType === "claude") {
-      console.log("Verifying Claude key", apiKey, "\n", apiUrl, "\n");
       return await verifyClaudeKey(apiKey, apiUrl, model);
     }
     return { valid: false, error: `Unknown provider type: ${providerType}` };

@@ -7,31 +7,36 @@ interface AIResponse {
   reply?: string;
 }
 
-/**
- * Parse the JSON response from an AI model into a structured format
- * @param response The JSON response from the AI model
- * @param originalTranscription The original transcription text
- * @returns Processed result with transcript, cleaned text, summary, and reply
- */
 export function parseProcessedResponse(
   response: string,
   originalTranscription: string
-): ProcessedResult {
-  let result: ProcessedResult = {
+): ProcessedResult & { summary?: string; reply?: string } {
+  let result: ProcessedResult & { summary?: string; reply?: string } = {
     original: originalTranscription,
     processed: "",
     error: undefined,
   };
 
   try {
-    const json = JSON.parse(response) as AIResponse;
+    let cleanedResponse = response.trim();
+
+    const jsonMarkdownMatch = cleanedResponse.match(
+      /^```json\s*([\s\S]*?)```$/
+    );
+    if (jsonMarkdownMatch && jsonMarkdownMatch[1])
+      cleanedResponse = jsonMarkdownMatch[1].trim();
+    else if (
+      cleanedResponse.startsWith("```") &&
+      cleanedResponse.endsWith("```")
+    )
+      cleanedResponse = cleanedResponse.slice(3, -3).trim();
+
+    const json = JSON.parse(cleanedResponse) as AIResponse;
     if (json && typeof json === "object") {
       result.original = json.original_transcript || originalTranscription;
       result.processed = json.cleaned_transcript || "";
-
-      // Additional fields that might be useful but aren't in the ProcessedResult interface
-      const summary = json.summary || "";
-      const reply = json.reply || "";
+      result.summary = json.summary || "";
+      result.reply = json.reply || "";
 
       if (!json.cleaned_transcript) console.warn("Missing cleaned_transcript");
       if (!json.summary) console.warn("Missing summary");

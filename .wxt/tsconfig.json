@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "paths": {
+      "$lib": ["../src/lib"],
+      "$lib/*": ["../src/lib/*"],
+      "$api": ["../src/api"],
+      "$api/*": ["../src/api/*"],
+      "$services": ["../src/services"],
+      "$services/*": ["../src/services/*"],
+      "$utils": ["../src/utils"],
+      "$utils/*": ["../src/utils/*"],
+      "$types": ["../src/types"],
+      "$types/*": ["../src/types/*"],
+      "@": ["../src"],
+      "@/*": ["../src/*"],
+      "~": ["../src"],
+      "~/*": ["../src/*"],
+      "@@": [".."],
+      "@@/*": ["../*"],
+      "~~": [".."],
+      "~~/*": ["../*"]
+    }
+  },
+  "include": [
+    "../**/*",
+    "./wxt.d.ts"
+  ],
+  "exclude": ["../dist"]
+}

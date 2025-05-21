@@ -1,5 +1,4 @@
 <script lang="ts">
-  
   import { mount } from "svelte";
   import TranscribeButton from "./TranscribeButton.svelte";
   import TranscriptionModal from "./TranscriptionModal.svelte";

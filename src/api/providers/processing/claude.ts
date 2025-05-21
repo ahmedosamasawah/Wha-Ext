@@ -5,17 +5,11 @@ import { parseProcessedResponse } from "$utils/responseParser";
 import { renderTemplate, defaultTemplates } from "$utils/template";
 
 import type {
-  ProcessorProvider,
-  ApiKeyVerificationResult,
   ProcessedResult,
+  ProcessorProvider,
+  ClaudeProcessorConfig,
+  ApiKeyVerificationResult,
 } from "$types/providers";
-
-interface ClaudeProcessorConfig {
-  apiKey?: string;
-  apiUrl?: string;
-  model?: string;
-  processingModel?: string;
-}
 
 const DEFAULT_CONFIG: ClaudeProcessorConfig = {
   apiUrl: "https://api.anthropic.com",

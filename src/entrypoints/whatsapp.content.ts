@@ -1,53 +1,17 @@
+import "../assets/app.css";
 import { mount } from "svelte";
 import App from "../components/App.svelte";
-import { initialize, getAllSettings } from "$services/settingsService";
+import { initialize, getAllSettings } from "../services/settingsService.js";
 
 export default defineContentScript({
   matches: ["https://web.whatsapp.com/*"],
   runAt: "document_end",
-  main: async (ctx) => {
-    const setupMessageListener = () => {
-      browser.runtime.onMessage.addListener((message) => {
-        console.log("Content script received message:", message);
-        if (message.action === "settingsUpdated") {
-          try {
-            const currentSettings = localStorage.getItem(
-              "whatsapp-transcriber-settings"
-            );
-            const latestSettings = JSON.stringify(getAllSettings());
-
-            if (latestSettings !== currentSettings) {
-              localStorage.setItem(
-                "whatsapp-transcriber-settings",
-                latestSettings
-              );
-              if (document.getElementById("whatsapp-transcriber-app")) {
-                window.location.reload();
-              }
-            }
-          } catch (error) {
-            console.error("Error handling settings update:", error);
-          }
-        }
-        return true;
-      });
-
-      browser.runtime
-        .sendMessage({ action: "contentScriptReady" })
-        .catch((e) => {
-          console.log("Could not notify background script of readiness:", e);
-        });
-    };
-
-    setupMessageListener();
-
-    const initApp = async () => {
-      // Create a container with minimal styling and no external dependencies
-      const container = document.createElement("div");
-      container.id = "whatsapp-transcriber-app";
-
-      // Apply basic styles to ensure our container doesn't affect the page
-      container.style.cssText = `
+  main: async () => {
+    async function initTranscriber() {
+      const app = document.createElement("div");
+      app.id = "whatsapp-transcriber-app";
+      app.className = "whatsapp-transcriber-app";
+      app.style.cssText = `
         position: absolute;
         top: 0;
         left: 0;
@@ -56,18 +20,30 @@ export default defineContentScript({
         overflow: visible;
         z-index: 9996;
       `;
-
-      document.body.appendChild(container);
+      document.body.appendChild(app);
 
       await initialize();
-      const currentSettings = JSON.stringify(getAllSettings());
-      localStorage.setItem("whatsapp-transcriber-settings", currentSettings);
+      let previousSettingsJson = JSON.stringify(getAllSettings());
 
-      mount(App, { target: container });
-    };
+      mount(App, { target: app });
+
+      // @ts-ignore
+      chrome.runtime.onMessage.addListener((message: { action: string }) => {
+        if (message.action === "settingsUpdated") {
+          const currentSettingsJson = JSON.stringify(getAllSettings());
+          if (currentSettingsJson !== previousSettingsJson) {
+            previousSettingsJson = currentSettingsJson;
+            window.location.reload();
+          }
+        }
+        return true;
+      });
+
+      chrome.runtime.sendMessage({ action: "contentScriptReady" });
+    }
 
     if (document.readyState === "loading")
-      ctx.addEventListener(document, "DOMContentLoaded", initApp);
-    else await initApp();
+      document.addEventListener("DOMContentLoaded", initTranscriber);
+    else await initTranscriber();
   },
 });

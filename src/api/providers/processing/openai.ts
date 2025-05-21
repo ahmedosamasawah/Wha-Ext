@@ -5,17 +5,11 @@ import { parseProcessedResponse } from "$utils/responseParser";
 import { renderTemplate, defaultTemplates } from "$utils/template";
 
 import type {
-  ProcessorProvider,
-  ApiKeyVerificationResult,
   ProcessedResult,
+  ProcessorProvider,
+  OpenAIProcessorConfig,
+  ApiKeyVerificationResult,
 } from "$types/providers";
-
-interface OpenAIProcessorConfig {
-  apiKey?: string;
-  apiUrl?: string;
-  model?: string;
-  processingModel?: string;
-}
 
 const DEFAULT_CONFIG: OpenAIProcessorConfig = {
   apiUrl: "https://api.openai.com",

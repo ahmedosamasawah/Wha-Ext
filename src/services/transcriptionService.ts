@@ -16,11 +16,6 @@ interface TranscriberConfig {
   apiUrl?: string;
 }
 
-interface ProcessorConfig {
-  apiKey: string;
-  processingModel?: string;
-}
-
 export interface ApiKeyVerificationResult {
   valid: boolean;
   error?: string;
@@ -71,10 +66,18 @@ export const configureProcessingProvider = (
 ): ProcessorProvider => {
   const providerType = settings.processingProviderType || "openai";
 
-  return getProcessor(providerType, {
+  const config: any = {
     apiKey: settings.processingApiKey || "",
     processingModel: settings.processingModel,
-  });
+  };
+
+  if (providerType === "ollama") {
+    config.ollamaServerUrl =
+      settings.ollamaServerUrl || "http://localhost:11434";
+    config.model = settings.processingModel || "llama3.2:latest";
+  }
+
+  return getProcessor(providerType, config);
 };
 
 export const verifyLocalWhisperServer = async (

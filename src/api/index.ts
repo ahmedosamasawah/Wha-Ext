@@ -1,11 +1,12 @@
 import { createOpenAIProcessor } from "./providers/processing/openai";
 import { createClaudeProcessor } from "./providers/processing/claude";
+import { createOllamaProcessor } from "./providers/processing/ollama";
 import { createOpenAITranscriber } from "./providers/transcription/openai";
 import type { ProcessorProvider, TranscriberProvider } from "$types/providers";
 import { createLocalWhisperTranscriber } from "./providers/transcription/local-whisper";
 
 interface ProviderCreator<T> {
-  (config: any): T;
+  (config?: any): T;
 }
 
 const TRANSCRIPTION_PROVIDERS: Record<
@@ -22,6 +23,7 @@ const PROCESSING_PROVIDERS: Record<
 > = {
   openai: createOpenAIProcessor,
   claude: createClaudeProcessor,
+  ollama: createOllamaProcessor,
 };
 
 export function getTranscriber(

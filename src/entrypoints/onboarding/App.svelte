@@ -26,6 +26,7 @@
   let processingApiKey = $state("");
   let transcriptionApiKey = $state("");
   let localWhisperUrl = $state("http://localhost:9000");
+  let ollamaServerUrl = $state("http://localhost:11434");
 
   let language = $state("auto");
   let promptTemplate = $state("");
@@ -62,6 +63,10 @@
         { id: "claude-3-5-sonnet-20240620", name: "Claude 3.5 Sonnet" },
         { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku (Fastest)" },
       ],
+      transcription: [],
+    },
+    ollama: {
+      processing: [{ id: "llama3.2:latest", name: "Llama 3.2" }],
       transcription: [],
     },
   });
@@ -120,6 +125,7 @@
       transcriptionModel = value.transcriptionModel || "whisper-1";
       isExtensionEnabled = value.isExtensionEnabled !== false;
       localWhisperUrl = value.localWhisperUrl || "http://localhost:9000";
+      ollamaServerUrl = value.ollamaServerUrl || "http://localhost:11434";
 
       transcriptionProviderType =
         value.transcriptionProviderType || getDefaultTranscriber();
@@ -188,6 +194,42 @@
   }
 
   async function verifyProcessingApiKey() {
+    if (processingProviderType === "ollama") {
+      isVerifyingProcessing = true;
+      processingVerificationStatus = null;
+
+      try {
+        const result = await verifyApiKeyService(
+          "",
+          processingProviderType,
+          "processing"
+        );
+
+        if (result.valid) {
+          processingVerificationStatus = {
+            valid: true,
+            message: "Ollama server connection verified successfully!",
+          };
+        } else {
+          processingVerificationStatus = {
+            valid: false,
+            message: result.error || "Failed to connect to Ollama server",
+          };
+        }
+      } catch (error: unknown) {
+        processingVerificationStatus = {
+          valid: false,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Error verifying Ollama server connection",
+        };
+      } finally {
+        isVerifyingProcessing = false;
+      }
+      return;
+    }
+
     if (!processingApiKey) {
       processingVerificationStatus = {
         valid: false,
@@ -282,6 +324,7 @@
       promptTemplate,
       language,
       localWhisperUrl,
+      ollamaServerUrl,
     });
 
     settingsSaved = {
@@ -499,27 +542,42 @@
 
     <div class={["mb-4"]}>
       <label
-        for="processingApiKey"
+        for={processingProviderType === "ollama"
+          ? "ollamaServerUrl"
+          : "processingApiKey"}
         class={["block text-sm font-medium text-gray-700 mb-1"]}
       >
-        Processing API Key
+        {processingProviderType === "ollama"
+          ? "Ollama Server"
+          : "Processing API Key"}
       </label>
       <div class={["flex"]}>
-        <input
-          id="processingApiKey"
-          type="password"
-          placeholder={`Enter ${processingProviderType} API key`}
-          bind:value={processingApiKey}
-          class={[
-            "flex-1 p-2 border border-gray-300 rounded-l-md shadow-sm focus:ring-[#00a884] focus:border-[#00a884]",
-          ]}
-        />
+        {#if processingProviderType === "ollama"}
+          <input
+            id="ollamaServerUrl"
+            type="text"
+            placeholder="http://localhost:11434"
+            bind:value={ollamaServerUrl}
+            readonly={true}
+            class={[
+              "flex-1 p-2 border border-gray-300 rounded-l-md shadow-sm focus:ring-[#00a884] focus:border-[#00a884] bg-gray-100",
+            ]}
+          />
+        {:else}
+          <input
+            id="processingApiKey"
+            type="password"
+            placeholder={`Enter ${processingProviderType} API key`}
+            bind:value={processingApiKey}
+            class={[
+              "flex-1 p-2 border border-gray-300 rounded-l-md shadow-sm focus:ring-[#00a884] focus:border-[#00a884]",
+            ]}
+          />
+        {/if}
         <button
           onclick={verifyProcessingApiKey}
           disabled={isVerifyingProcessing}
-          class={[
-            "bg-[#00a884] text-white px-4 py-2 rounded-r-md hover:bg-[#008f72] focus:outline-none focus:ring-2 focus:ring-[#00a884] focus:ring-offset-2 disabled:opacity-50",
-          ]}
+          class="bg-[#00a884] text-white px-4 py-2 rounded-r-md hover:bg-[#008f72] focus:outline-none focus:ring-2 focus:ring-[#00a884] focus:ring-offset-2 disabled:opacity-50"
           type="button"
         >
           {isVerifyingProcessing ? "Verifying..." : "Verify"}
@@ -536,6 +594,13 @@
           ]}
         >
           {processingVerificationStatus.message}
+        </p>
+      {/if}
+
+      {#if processingProviderType === "ollama"}
+        <p class={["mt-1 text-xs text-gray-500"]}>
+          Ollama is a local LLM server. Make sure it's running with the
+          OLLAMA_ORIGINS environment variable set to allow this extension.
         </p>
       {/if}
     </div>

@@ -6,9 +6,9 @@ import {
 } from "$api/index";
 
 import {
-  writable,
   get,
   derived,
+  writable,
   type Writable,
   type Readable,
 } from "svelte/store";
@@ -36,6 +36,7 @@ export interface Settings {
   processingModel: string;
   transcriptionModel: string;
   localWhisperUrl: string;
+  ollamaServerUrl?: string;
   processingProviderType: string;
   transcriptionProviderType: string;
 }
@@ -62,7 +63,7 @@ export const supportedLanguages: Language[] = [
   { id: "ar", name: "Arabic" },
 ];
 
-const DEFAULT_SETTINGS: Settings = {
+export const DEFAULT_SETTINGS: Settings = {
   language: "auto",
   promptTemplate: "",
   processingApiKey: "",
@@ -71,6 +72,7 @@ const DEFAULT_SETTINGS: Settings = {
   processingModel: "gpt-4o",
   transcriptionModel: "whisper-1",
   localWhisperUrl: "http://localhost:9000",
+  ollamaServerUrl: "http://localhost:11434",
   processingProviderType: getDefaultProcessor(),
   transcriptionProviderType: getDefaultTranscriber(),
 };
@@ -102,7 +104,6 @@ const status: Writable<Status> = writable({
   lastError: null,
 });
 
-// Use a typed Map for the transcription cache
 export const transcriptionCache: Writable<Map<string, TranscriptionData>> =
   writable(new Map());
 
@@ -114,15 +115,12 @@ export async function initialize(): Promise<void> {
     );
 
     if (storedTranscriptions && typeof storedTranscriptions === "object") {
-      // Convert the stored object back to a Map with proper TranscriptionData types
       const transcriptionMap = new Map<string, TranscriptionData>();
 
       Object.entries(storedTranscriptions).forEach(([key, value]) => {
         if (value && typeof value === "object") {
-          // Use type assertion to access properties safely
           const valueAsAny = value as any;
 
-          // Ensure all required fields exist with proper types
           const typedValue: TranscriptionData = {
             transcript: String(valueAsAny.transcript || ""),
             cleaned: String(valueAsAny.cleaned || ""),
@@ -164,10 +162,16 @@ export async function initialize(): Promise<void> {
 
     setupSettingsPersistence();
 
-    chrome.runtime.sendMessage({ action: "settingsUpdated" });
+    try {
+      await chrome.runtime.sendMessage({ action: "settingsUpdated" });
+    } catch (err) {
+      console.log(
+        "Failed to notify about settings update, receivers may not be ready yet:",
+        err
+      );
+    }
   } catch (error) {
     console.error("Error initializing settings:", error);
-    // Continue with default settings if there was an error
     settings.set({ ...DEFAULT_SETTINGS });
     updateStatus({
       isApiKeyConfigured: false,
@@ -212,30 +216,23 @@ function setupSettingsPersistence(): void {
   });
 
   transcriptionCache.subscribe(async (cache) => {
-    try {
-      if (cache.size > 0) {
-        // Create a clean serializable object without any circular references or non-serializable elements
-        const safeTranscriptions: Record<string, TranscriptionData> = {};
+    if (cache.size > 0) {
+      const safeTranscriptions: Record<string, TranscriptionData> = {};
 
-        cache.forEach((value, key) => {
-          // Create a clean copy of each transcription with only the needed serializable fields
-          safeTranscriptions[key] = {
-            transcript: String(value.transcript || ""),
-            cleaned: String(value.cleaned || ""),
-            summary: String(value.summary || ""),
-            reply: String(value.reply || ""),
-          };
-        });
+      cache.forEach((value, key) => {
+        safeTranscriptions[key] = {
+          transcript: String(value.transcript || ""),
+          cleaned: String(value.cleaned || ""),
+          summary: String(value.summary || ""),
+          reply: String(value.reply || ""),
+        };
+      });
 
-        // Store the safe serializable object
-        await storageService.set(
-          "wa-transcriptions",
-          safeTranscriptions,
-          "indexedDB"
-        );
-      }
-    } catch (error) {
-      console.error("Error saving transcription cache:", error);
+      await storageService.set(
+        "wa-transcriptions",
+        safeTranscriptions,
+        "indexedDB"
+      );
     }
   });
 }
@@ -263,7 +260,14 @@ export async function updateSettings(
     updateStatus({ isApiKeyConfigured });
   }
 
-  chrome.runtime.sendMessage({ action: "settingsUpdated" });
+  try {
+    await chrome.runtime.sendMessage({ action: "settingsUpdated" });
+  } catch (err) {
+    console.log(
+      "Failed to notify about settings update, receivers may not be ready yet:",
+      err
+    );
+  }
 }
 
 export async function resetSettings(): Promise<void> {
@@ -320,7 +324,6 @@ export async function cacheTranscription(
   data: TranscriptionData
 ): Promise<void> {
   try {
-    // Create a clean copy of the transcription data to avoid storing non-serializable elements
     const safeCopy: TranscriptionData = {
       transcript: String(data.transcript || ""),
       cleaned: String(data.cleaned || ""),
@@ -338,4 +341,3 @@ export async function cacheTranscription(
 }
 
 export { settings, status };
-export { DEFAULT_SETTINGS };

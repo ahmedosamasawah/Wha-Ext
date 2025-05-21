@@ -75,3 +75,31 @@ export interface TranscriberProvider {
     options?: any
   ): Promise<ApiKeyVerificationResult>;
 }
+
+export interface OllamaProcessorConfig {
+  apiUrl?: string;
+  model?: string;
+  ollamaServerUrl?: string;
+}
+
+export interface ProcessorConfig {
+  apiKey?: string;
+  apiUrl?: string;
+  model?: string;
+  processingModel?: string;
+}
+
+export interface ClaudeProcessorConfig extends ProcessorConfig {}
+
+export interface OpenAIProcessorConfig extends ProcessorConfig {}
+
+export interface OpenAITranscriberConfig extends ProcessorConfig {}
+
+export interface LocalWhisperConfig {
+  apiUrl?: string;
+}
+
+export interface ConversionResult {
+  blob: Blob;
+  extension: string;
+}
