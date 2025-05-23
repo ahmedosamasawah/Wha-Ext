@@ -18,7 +18,69 @@
     TranscriptionData,
   } from "$types/components";
 
-  (async () => await initialize())();
+  // Helper function to detect extension context invalidation
+  function isExtensionContextInvalidated(error: any): boolean {
+    return (
+      error?.message?.includes("Extension context invalidated") ||
+      error?.message?.includes("context invalidated") ||
+      !chrome?.runtime ||
+      typeof chrome?.runtime?.sendMessage !== "function"
+    );
+  }
+
+  // Helper function to show context invalidation error
+  function showExtensionContextError() {
+    const notification = document.createElement("div");
+    notification.innerHTML = `
+      <div style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ff4444;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        z-index: 10000;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        max-width: 300px;
+      ">
+        <strong>WhatsApp Transcriber:</strong><br>
+        Extension was reloaded. Please refresh this page to continue using transcription.
+        <button onclick="window.location.reload()" style="
+          background: white;
+          color: #ff4444;
+          border: none;
+          padding: 4px 8px;
+          border-radius: 4px;
+          margin-left: 8px;
+          cursor: pointer;
+          font-size: 12px;
+        ">Refresh Page</button>
+      </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      if (notification.parentElement) {
+        notification.parentElement.removeChild(notification);
+      }
+    }, 10000);
+  }
+
+  // Initialize with error handling
+  (async () => {
+    try {
+      await initialize();
+    } catch (error) {
+      console.error("Error initializing settings in App component:", error);
+      if (isExtensionContextInvalidated(error)) {
+        showExtensionContextError();
+      }
+    }
+  })();
 
   const PLAY_BUTTON_SELECTORS = [
     'span[data-icon="audio-play"]',
@@ -179,6 +241,16 @@
 
       await cacheTranscription(currentBubbleId, modalData);
     } catch (error) {
+      console.error("Error processing audio:", error);
+
+      // Check for extension context invalidation
+      if (isExtensionContextInvalidated(error)) {
+        showExtensionContextError();
+        modalLoading = false;
+        showModal = false;
+        return;
+      }
+
       const errorResult = formatTranscriptionError(error as Error);
 
       modalData = processedResultToTranscriptionData(errorResult);
@@ -187,7 +259,12 @@
       const component = buttons.get(currentBubbleId);
       if (component) component.setError();
 
-      await cacheTranscription(currentBubbleId, modalData);
+      try {
+        await cacheTranscription(currentBubbleId, modalData);
+      } catch (cacheError) {
+        console.error("Error caching transcription:", cacheError);
+        // Don't show another error notification for cache failures
+      }
     }
   }
 

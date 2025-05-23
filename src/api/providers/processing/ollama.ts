@@ -10,7 +10,7 @@ import type {
 
 const DEFAULT_CONFIG: OllamaProcessorConfig = {
   apiUrl: "http://localhost:11434",
-  model: "llama3.2:latest",
+  model: "ollama3.2:latest",
 };
 
 export const createOllamaProcessor = (
@@ -63,7 +63,7 @@ export const createOllamaProcessor = (
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: settings.model || "llama3.2:latest",
+          model: settings.model || "ollama3.2:latest",
           prompt: promptContent,
           stream: false,
         }),

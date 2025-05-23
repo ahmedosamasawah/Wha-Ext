@@ -1,6 +1,7 @@
 import { getProcessor, getTranscriber } from "$api/index";
 
 import {
+  initialize,
   updateStatus,
   getAllSettings,
   updateSettings,
@@ -74,7 +75,7 @@ export const configureProcessingProvider = (
   if (providerType === "ollama") {
     config.ollamaServerUrl =
       settings.ollamaServerUrl || "http://localhost:11434";
-    config.model = settings.processingModel || "llama3.2:latest";
+    config.model = settings.processingModel || "ollama3.2:latest";
   }
 
   return getProcessor(providerType, config);
@@ -88,7 +89,11 @@ export const verifyLocalWhisperServer = async (
   const provider = getTranscriber("localWhisper", { apiUrl });
 
   const result = await provider.verifyApiKey();
-  if (result.valid) await updateSettings({ localWhisperUrl: apiUrl });
+  if (result.valid)
+    await updateSettings({
+      localWhisperUrl: apiUrl,
+      transcriptionProviderType: "localWhisper",
+    });
 
   return result;
 };
@@ -97,11 +102,27 @@ export const verifyApiKey = async (
   apiKey: string,
   providerType: string,
   providerCategory: "transcription" | "processing",
-  options: { localWhisperUrl?: string } = {}
+  options: { localWhisperUrl?: string; ollamaServerUrl?: string } = {}
 ): Promise<ApiKeyVerificationResult> => {
   try {
     if (providerType === "localWhisper")
       return verifyLocalWhisperServer(options);
+
+    if (providerType === "ollama" && providerCategory === "processing") {
+      const ollamaServerUrl =
+        options.ollamaServerUrl || "http://localhost:11434";
+      const provider = getProcessor(providerType, { ollamaServerUrl });
+      const result = await provider.verifyApiKey();
+
+      if (result.valid) {
+        await updateSettings({
+          ollamaServerUrl,
+          processingProviderType: "ollama",
+        });
+      }
+
+      return result;
+    }
 
     const provider =
       providerCategory === "transcription"
@@ -113,6 +134,7 @@ export const verifyApiKey = async (
     if (result.valid)
       await updateSettings({
         [`${providerCategory}ApiKey`]: apiKey,
+        [`${providerCategory}ProviderType`]: providerType,
       });
 
     return result;
@@ -127,6 +149,8 @@ export const processVoiceMessage = async (
   updateStatus({ pendingTranscriptions: 1 });
 
   try {
+    await initialize();
+
     const settings = getAllSettings();
     const transcriber = configureTranscriber(settings);
     const processor = configureProcessingProvider(settings);

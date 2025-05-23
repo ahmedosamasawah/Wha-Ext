@@ -90,6 +90,7 @@ export default defineBackground(() => {
     },
 
     async settingsUpdated() {
+      await initialize();
       notifyWhatsappTabs();
       return { success: true };
     },
